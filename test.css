@@ -1,0 +1,58 @@
+@font-face {
+  font-family: typewriter;
+  src: url(/assets/fonts/TravelingTypewriter.ttf);
+}
+
+@font-face {
+  font-family: metro;
+  src: url(/assets/fonts/MetroRetroNF.ttf);
+}
+
+body {
+  color: #FEFDFD;
+  font-family: typewriter;
+  background: 'red';
+}
+
+h1 {
+  text-align: center;
+  font-family: metro;
+  font-size: 5.9vw;
+}
+
+a:link {
+  color: #fff;
+  font-family: metro;
+}
+
+.larger {
+  font-size: 200%;
+}
+
+.centered {
+  text-align: center;
+}
+
+.first-slide {
+  min-height: 20em;
+  background-color: #000;
+}
+
+.slide {
+  background-image: url(/images/silent.jpg);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-attachment: fixed;
+  background-size: cover;
+  min-height: 20em;
+  padding: 13%;
+}
+
+.left-image {
+  width: 30%;
+  height: 70%;
+}
+
+iframe {
+  width: 70%;
+}
