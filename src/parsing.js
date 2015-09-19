@@ -1,7 +1,6 @@
 var _ = require('lodash');
 var css = require('css');
 var htmlparser = require('htmlparser');
-var fs = require('fs');
 
 function parseHtml(html, cb) {
   var handler = new htmlparser.DefaultHandler(function (error, dom) {
@@ -12,8 +11,7 @@ function parseHtml(html, cb) {
   parser.parseComplete(html);
 }
 
-module.exports = function(h, c, cb) {
-  var m = fs.readFileSync(__dirname+'/mozilla.css', 'utf-8');
+module.exports = function(h, c, m, cb) {
   var m_rules = css.parse(m, {}).stylesheet.rules;
   var rules = css.parse(c, {}).stylesheet.rules;
 

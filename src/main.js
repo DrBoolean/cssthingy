@@ -10,7 +10,8 @@ module.exports = {
   stylize: function(htmlpath, csspath, cb) {
     var h = fs.readFileSync(htmlpath, 'utf-8');
     var c = fs.readFileSync(csspath, 'utf-8');
-    parsing(h, c, _.compose(cb, styles))
+    var m = fs.readFileSync(__dirname+'/mozilla.css', 'utf-8');
+    parsing(h, c, m, _.compose(cb, styles))
   },
   createLayout: boxes.createLayout,
   print: boxes.print,
