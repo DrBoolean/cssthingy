@@ -141,7 +141,7 @@ var attachAllStyles = function(parent, node, rules) {
   return node;
 }
 
-module.exports = function(rules, mrules, dom) {
+module.exports = function(mrules, rules, dom) {
   m_rules = mrules.reduce(function(acc, x){
       (x.selectors||[]).map(function(s){ acc[s] = x.declarations.map(declarationToStyle); });
       return acc;

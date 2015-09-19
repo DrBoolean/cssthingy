@@ -14,6 +14,7 @@ module.exports = {
   },
   createLayout: boxes.createLayout,
   print: boxes.print,
-  calculateDimensions: layout
+  calculateDimensions: layout,
+  viewport: boxes.makeViewport
 }
 

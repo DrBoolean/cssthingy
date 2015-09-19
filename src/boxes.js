@@ -1,18 +1,10 @@
 var _ = require('lodash');
+var types = require('./types');
+var Box = types.Box;
+var Rect = types.Rect;
+var EdgeSizes = types.EdgeSizes;
+var Dimensions = types.Dimensions;
 
-var Rect = function(r) {
-  return r || {x: 0, y: 0, width: 0, height: 0};
-}
-
-var EdgeSizes = function() {
-  return {left: 0, right: 0, top: 0, bottom: 0};
-}
-
-var Dimensions = function() {
-  return {content: Rect(), padding: EdgeSizes(), border: EdgeSizes(), margin: EdgeSizes() };
-}
-
-var Box = function(n, t) { return {type: t, node: n, children: [], dimensions: Dimensions() } }
 
 var pushAnon = function(parent, box) {
   var prev_box = _.last(parent.children);
@@ -81,10 +73,6 @@ var printBox = function(acc, box) {
   }
 }
 
-var getBoxStyle = function(box) {
-  return (box.node && box.node.style) || {};
-}
-
 module.exports = {
   createLayout: function(stylized_tree) {
     var initial = Box(null, 'block');
@@ -92,5 +80,10 @@ module.exports = {
   },
   print: function(layout) {
     return layout.reduce(printBox, "");
+  },
+  makeViewport: function(dims) {
+    var viewport = Box();
+    viewport.dimensions.content = _.extend({x: 0, y: 0, width: 1440, height: 0}, (dims||{}));
+    return viewport;
   }
 }

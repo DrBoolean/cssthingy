@@ -1,3 +1,11 @@
+var _ = require('lodash');
+var types = require('./types');
+var Rect = types.Rect;
+
+var getBoxStyle = function(box) {
+  return (box.node && box.node.style) || {};
+}
+
 //block only
 var calcWidth = function(parent, box) {
   var parent_width = parent.dimensions.content.width;
@@ -150,9 +158,7 @@ var addDimensions = function(parent, box) {
   return box;
 }
 
-module.exports = function(layout_boxes) {
-    var viewport = Box()
-    viewport.dimensions.content = {x: 0, y: 0, width: 1440, height: 0};
+module.exports = function(viewport, layout_boxes) {
     return layout_boxes.map(function(b) { return addDimensions(viewport, b); })
 }
 

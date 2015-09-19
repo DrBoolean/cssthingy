@@ -76,7 +76,7 @@ describe("Parsing", function(){
     describe("Calculating Dimensions", function(){
       var dfirstDivBox, secondDivBox;
       beforeEach(function() {
-        var dimensioned = M.calculateDimensions(layout);
+        var dimensioned = M.calculateDimensions(M.viewport({width: 1440}), layout);
         var bodyBox = _.last(dimensioned[0].children[1].children);
         firstDivBox = bodyBox.children[0]
         secondDivBox = firstDivBox.children[0].children[0];
