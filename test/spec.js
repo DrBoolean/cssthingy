@@ -54,17 +54,25 @@ describe("Parsing", function(){
       assert.equal(firstDivBox.type, 'block');
     });
 
-    it("makes anonymous boxes to hold inline styles", function(){
-      assert.equal(secondDivBox.children[2].type, 'anonymous');
+    it("makes anonymous boxes to hold inline styles if any children are also blocks", function(){
+      var b_anon = secondDivBox.children[2];
+      assert.equal(b_anon.type, 'anonymous');
+    });
+
+    it("doesn't make anonymous boxes to hold inline styles if all children are also inline", function(){
+      var paragraph = secondDivBox.children[0];
+      assert.equal(paragraph.children[0].type, 'inline');
     });
 
     it("places consecutive inline styles in the same anonymous box", function(){
-      assert.equal(secondDivBox.children[2].children.length, 2);
-      assert(_.all(secondDivBox.children[2].children, function(c){  return c.type == "inline"}));
+      var b_anon = secondDivBox.children[2];
+      assert.equal(b_anon.children.length, 2);
+      assert(_.all(b_anon.children, function(c){  return c.type == "inline"}));
     });
 
-    it("wraps stranded text in an anonymous box", function(){
-      assert.equal(secondDivBox.children[4].type, 'anonymous');
+    it("wraps stranded text(2) in an anonymous box if inside a block", function(){
+      var stranded_text_two_anon = secondDivBox.children[4]
+      assert.equal(stranded_text_two_anon.type, 'anonymous');
     });
 
     it("anonymous boxes inherit their properties from the containing block box", function(){
@@ -74,16 +82,22 @@ describe("Parsing", function(){
     });
 
     describe("Calculating Dimensions", function(){
-      var dfirstDivBox, secondDivBox;
+      var firstDivBox, secondDivBox;
       beforeEach(function() {
         var dimensioned = M.calculateDimensions(M.viewport({width: 1440}), layout);
+        console.log(M.print(dimensioned));
         var bodyBox = _.last(dimensioned[0].children[1].children);
-        firstDivBox = bodyBox.children[0]
+        firstDivBox = bodyBox.children[0];
         secondDivBox = firstDivBox.children[0].children[0];
       });
 
-      it("calculates width", function(){
+      it("calculates block width", function(){
         assert.equal(secondDivBox.dimensions.content.width, 1424);
+      });
+
+      it("calculates height", function(){
+        var paragraph = secondDivBox.children[0];
+        assert.equal(paragraph.dimensions.content.height, 37);
       });
     });
   });

@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var types = require('./types');
+var ua = require('./user_agent');
 var Rect = types.Rect;
 
 var getBoxStyle = function(box) {
@@ -101,6 +102,9 @@ var toPx = function(str, container_size) {
   if(str.match(/px$/i)) result = parseInt(str);
   if(str.match(/em$/i)) result = (parseInt(str) * BASE_PX_SIZE);
   if(str.match(/%$/)) result = (parseInt(str) * container_size) * 100;
+  if(str.match(/thin/)) result = ua.thin;
+  if(str.match(/medium/)) result = ua.medium;
+  if(str.match(/thick/)) result = ua.thick;
   return result || 0;
 }
 

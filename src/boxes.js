@@ -17,6 +17,10 @@ var pushAnon = function(parent, box) {
   }
 }
 
+var hasAllInlineKids = function(box) {
+  return _.all(box.children, function(k) { return k.node.style.display.match(/inline/i) });
+}
+
 var makeBox = function(parent, node) {
   var box;
   switch(node.style.display) {
@@ -26,7 +30,7 @@ var makeBox = function(parent, node) {
       break;
     case 'inline':
       box = Box(node, 'inline');
-      pushAnon(parent, box);
+      hasAllInlineKids(parent) ? parent.children.push(box) : pushAnon(parent, box);
       break;
     case 'inline-block':
       box = Box(node, 'inline-block');
@@ -47,29 +51,36 @@ var nodeToString = function(node) {
   return desc || node.type;
 }
 
+var dimensionsToString = function(dims) {
+  return '('+dims.content.x+':'+dims.content.y+' '+dims.content.width+':'+dims.content.height+')';
+}
 
 var printBox = function(acc, box) {
+  var indent = Array(acc.indent).join(' ');
+  var str = acc.str;
+
   switch(box.type) {
     case 'block' :
-      acc += '\n  block.'+nodeToString(box.node) + JSON.stringify(box.dimensions);
+      str += '\n'+indent+'block.'+nodeToString(box.node) + dimensionsToString(box.dimensions);
       break;
     case 'anonymous':
-      acc += '\n  anon'+ JSON.stringify(box.dimensions);
+      str += '\n'+indent+'anon'+ dimensionsToString(box.dimensions);
       break;
     case 'inline':
-      acc += '\n   inline.'+nodeToString(box.node) + JSON.stringify(box.dimensions);
+      str += '\n'+indent+'inline.'+nodeToString(box.node) + dimensionsToString(box.dimensions);
       break;
     case 'inline-block':
-      acc += '\n inline-block.'+nodeToString(box.node) + JSON.stringify(box.dimensions);
+      str += '\n'+indent+'inline-block.'+nodeToString(box.node) + dimensionsToString(box.dimensions);
       break;
     default:
-      acc += '\n   '+box.type+'.'+nodeToString(box.node) + JSON.stringify(box.dimensions);
+      str += '\n'+indent+box.type+'.'+nodeToString(box.node) + dimensionsToString(box.dimensions);
   }
 
-  if(box.children) {
-    return box.children.reduce(printBox, acc);
+  if(box.children.length) {
+    return box.children.reduce(printBox, {str: str, indent: acc.indent+2});
   } else {
-    return acc;
+    var new_indent = (acc.indent-2) < 0 ? 0 : acc.indent-2;
+    return {str: str, indent: new_indent};
   }
 }
 
@@ -79,7 +90,7 @@ module.exports = {
     return stylized_tree.map(function(t){ return makeBox(initial, t); });
   },
   print: function(layout) {
-    return layout.reduce(printBox, "");
+    return layout.reduce(printBox, {str: "", indent: 0}).str;
   },
   makeViewport: function(dims) {
     var viewport = Box();
