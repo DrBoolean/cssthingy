@@ -145,6 +145,10 @@ var layoutChildren = function(box) {
   });
 }
 
+var calcIHeight = function(parent, box) {
+  return box.node.style['line-height'];
+}
+
 var addDimensions = function(parent, box) {
   switch(box.type) {
     case 'block' :
@@ -152,6 +156,12 @@ var addDimensions = function(parent, box) {
       calcPosition(parent, box);
       layoutChildren(box);
       calcHeight(parent, box);
+      break;
+    case 'inline' :
+      calcWidth(parent, box);
+      calcPosition(parent, box);
+      layoutChildren(box);
+      calcIHeight(parent, box);
       break;
     default :
       calcWidth(parent, box);
