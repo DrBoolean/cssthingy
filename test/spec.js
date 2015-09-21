@@ -17,11 +17,15 @@ describe("Parsing", function(){
     });
   });
 
-  it('gets default styles', function(){
+  it('gets initial styles', function(){
+    assert.equal(firstDiv.style['line-height'], 'normal');
+    assert.equal(firstDiv.style['font-weight'], 'normal');
+  });
+
+  it('gets userAgent styles', function(){
     assert.equal(body.style['display'], 'block');
-    assert.equal(h1.style['display'], 'block');
     assert.equal(h1.style['font-weight'], 'bold');
-    assert.equal(firstDiv.style['display'], 'block');
+    assert.equal(h1.style['font-size'], '0.67em');
   });
 
   it('gives style to simple classes', function(){
@@ -82,16 +86,16 @@ describe("Parsing", function(){
     });
 
     describe("Calculating Dimensions", function(){
-      var firstDivBox, secondDivBox;
+      var dimensioned, firstDivBox, secondDivBox;
       beforeEach(function() {
-        var dimensioned = M.calculateDimensions(M.viewport({width: 1440}), layout);
-        console.log(M.print(dimensioned));
+        dimensioned = M.calculateDimensions(M.viewport({width: 1440}), layout);
         var bodyBox = _.last(dimensioned[0].children[1].children);
         firstDivBox = bodyBox.children[0];
         secondDivBox = firstDivBox.children[0].children[0];
       });
 
       it("calculates block width", function(){
+        console.log(M.print(dimensioned));
         assert.equal(secondDivBox.dimensions.content.width, 1424);
       });
 

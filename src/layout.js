@@ -1,6 +1,7 @@
 var _ = require('lodash');
 var types = require('./types');
 var ua = require('./user_agent');
+var u = require('./util');
 var Rect = types.Rect;
 
 var getBoxStyle = function(box) {
@@ -101,10 +102,11 @@ var toPx = function(str, container_size) {
   var BASE_PX_SIZE = 16;
   if(str.match(/px$/i)) result = parseInt(str);
   if(str.match(/em$/i)) result = (parseInt(str) * BASE_PX_SIZE);
-  if(str.match(/%$/)) result = (parseInt(str) * container_size) * 100;
+  if(str.match(/%$/)) result = (parseInt(str) * container_size) / 100;
   if(str.match(/thin/)) result = ua.thin;
   if(str.match(/medium/)) result = ua.medium;
   if(str.match(/thick/)) result = ua.thick;
+  if(str.match(/normal/)) result = ua.normal;
   return result || 0;
 }
 
@@ -134,7 +136,7 @@ var calcPosition = function(parent, box) {
 
 var calcHeight = function(parent, box) {
   var style = getBoxStyle(box);
-  if(style.height) box.dimensions.content.height = toPx(height, parent.dimensions.content.height);
+  if(style.height) box.dimensions.content.height = toPx(style.height, parent.dimensions.content.height);
 }
 
 var layoutChildren = function(box) {
@@ -146,7 +148,8 @@ var layoutChildren = function(box) {
 }
 
 var calcIHeight = function(parent, box) {
-  return box.node.style['line-height'];
+  //console.log('box.node.style', box.node.style);
+  box.dimensions.content.height = toPx(box.node.style['line-height']);
 }
 
 var addDimensions = function(parent, box) {

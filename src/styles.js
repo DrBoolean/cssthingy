@@ -1,6 +1,25 @@
 var _ = require('lodash');
 var spec = require('./spec');
 var m_rules;
+
+var Specificity = function(name) {
+  switch(name) {
+    case 'style': return [1,0,0,0];
+    case 'id': return [0,1,0,0];
+    case 'class': return  [0,0,1,0];
+    case 'tag': return [0,0,0,1];
+    default: return [0,0,0,0];
+  }
+}
+
+var sumSpecificity = function(s) {
+  console.log('S', s);
+  return parseInt(s.specificity.join(''));
+}
+
+var Style = function(specificity, style) {
+  return {specificity: specificity, style: style}
+}
 // tr: tagname(node) == tr
 // table > tr: tagname(node) == tr  && tagname(parent) == table) //  Direct des
 // table a: tagname(node) == a  && recurse(tagname(parent) == table)) //  Desc
@@ -19,10 +38,6 @@ var matchesTag = function(node, rule) {
   }
 }
 
-var matchingSelector = function(node, rule) {
-  return matchesClass(node, rule) || matchesTag(node, rule);
-}
-
 var getTag = function(node) {
   if(node.type === "tag") return node.name;
 }
@@ -38,19 +53,32 @@ var selectors = function(parent, node) {
 }
 
 var getInheritedStyles = function(node) {
-  return Object.keys(node.style).reduce(function(acc, k) {
+  var style = Object.keys(node.style).reduce(function(acc, k) {
     if(spec[k] && spec[k].inherit) {
       acc[k] = node.style[k];
     }
     return acc;
   }, {});
+  return Style(Specificity('inherited'), style);
 }
 
-var getDefaultStyle = function(node) {
-  return m_rules[getTag(node)] || [];
+var initial = Object.keys(spec).reduce(function(acc, k) {
+  if(spec[k].initial) { acc[k] = spec[k].initial; }
+  return acc;
+}, {});
+
+// TODO: only add props that apply
+var getInitialStyle = function(node) {
+  return Style(Specificity('default'), initial);
 }
 
-var declarationToStyle = function(d) {
+var getUserAgentStyle = function(node) {
+  var obj = m_rules[getTag(node)];
+  console.log('OBJ', obj);
+  if(obj) return Style(Specificity('tag'), obj);
+}
+
+var declarationToObj = function(d) {
   var o = {};
   o[d.property] = d.value;
   return o;
@@ -110,7 +138,7 @@ var convertShortHands = function(s) {
   }, {});
 }
 
-var toObj = function(styleString) {
+var inlineStyleToObj = function(styleString) {
   return styleString.split(';').reduce(function(acc, x) {
     var pair = x.split(':');
     acc[pair[0]] = pair[1];
@@ -118,23 +146,31 @@ var toObj = function(styleString) {
   }, {});
 }
 
+var matchWithSpecificity = function(node, rule) {
+  if(matchesClass(node, rule)) return Specificity("class");
+  if(matchesTag(node, rule)) return Specificity("tag");
+}
+
 var attachAllStyles = function(parent, node, rules) {
-  var styles = getDefaultStyle(node);
+  var styles = _.compact([getInitialStyle(node)].concat([getUserAgentStyle(node)]));
 
   if(parent.style) { styles.push(getInheritedStyles(parent)); }
 
   node.selectors = selectors(parent, node);
 
-  styles = styles.concat(_.flatten(rules.filter(function(rule) {
-      return matchingSelector(node, rule);
-    }).map(function(r){
-      return r.declarations.map(declarationToStyle);
-    })));
+  styles = styles.concat(_.compact(_.flatten(rules.map(function(rule) {
+      var specificity = matchWithSpecificity(node, rule);
+      if(specificity) return rule.declarations.map(function(d){
+          return Style(specificity, declarationToObj(d));
+        });
+    }))));
 
-  //http://www.smashingmagazine.com/2010/04/css-specificity-and-inheritance/#2-1-how-to-calculate-specificity
-  if(node.attribs && node.attribs['style']) styles.push(toObj(node.attribs['style']));
-  node.style = styles.reduce(function(acc, s){ return _.extend(acc, convertShortHands(s)); }, {});
-  node.style.display = node.style.display || 'inline'; // ! default to inline
+  if(node.attribs && node.attribs['style']) {
+    var specificity = Specificity('style');
+    styles.push(Style(specificity, inlineStyleToObj(node.attribs['style'])));
+  }
+  node.style = _.sortBy(styles, sumSpecificity).reduce(function(acc, s){ return _.extend(acc, convertShortHands(s.style)); }, {});
+
   if(node.children) {
     node.children = node.children.map(function(c){ return attachAllStyles(node, c, rules); });
   }
@@ -143,9 +179,13 @@ var attachAllStyles = function(parent, node, rules) {
 
 module.exports = function(mrules, rules, dom) {
   m_rules = mrules.reduce(function(acc, x){
-      (x.selectors||[]).map(function(s){ acc[s] = x.declarations.map(declarationToStyle); });
-      return acc;
-    }, {});
+    (x.selectors||[]).map(function(s){
+      acc[s] = x.declarations.reduce(function(acc, x){
+        return _.extend(acc, declarationToObj(x));
+      }, {});
+    });
+    return acc;
+  }, {});
 
     return dom.filter(function(n){ return n.type !== "directive"}).map(function(c){ return attachAllStyles({}, c, rules)});
 

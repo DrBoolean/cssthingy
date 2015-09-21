@@ -1,5 +1,6 @@
 var _ = require('lodash');
 var types = require('./types');
+var nodeToString = require('./util').nodeToString;
 var Box = types.Box;
 var Rect = types.Rect;
 var EdgeSizes = types.EdgeSizes;
@@ -44,12 +45,6 @@ var makeBox = function(parent, node) {
   return box;
 }
 
-var nodeToString = function(node) {
-  if(!node) return '?'
-  var sels = node.selectors;
-  var desc = _.compact([sels.tag, sels.id, sels.classes.join('')]).join('');
-  return desc || node.type;
-}
 
 var dimensionsToString = function(dims) {
   return '('+dims.content.x+':'+dims.content.y+' '+dims.content.width+':'+dims.content.height+')';
