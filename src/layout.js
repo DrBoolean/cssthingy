@@ -3,6 +3,7 @@ var types = require('./types');
 var ua = require('./user_agent');
 var u = require('./util');
 var Rect = types.Rect;
+var Box = types.Box;
 
 var getBoxStyle = function(box) {
   return (box.node && box.node.style) || {};
@@ -12,12 +13,12 @@ var getBoxStyle = function(box) {
 var calcWidth = function(parent, box) {
   var parent_width = parent.dimensions.content.width;
   var style = getBoxStyle(box);
-  var width = style['width'] || 'auto';
 
   var pxWidth = function(x) {
     return toPx(x, parent_width); //Q: border/margin/padding % is of width?
   }
 
+  var width = pxWidth(style['width']) || 'auto';
   var margin_left = pxWidth(style['margin-left']);
   var margin_right = pxWidth(style['margin-right']);
   var border_left = pxWidth(style['border-left-width']);
@@ -40,22 +41,29 @@ var calcWidth = function(parent, box) {
 
   var underflow = parent_width - total;
 
-  if(margin_left == "auto" && !(margin_right == "auto" || width == "auto") ) {
-    margin_left = underflow;
+
+  if(margin_right != "auto" && margin_left != "auto" && width != "auto") {
+    margin_right = margin_right + underflow;
   }
-  if(margin_right == "auto" && !(margin_left == "auto" || width == "auto") ) {
+
+  if(margin_right == "auto" && margin_left != "auto" && width != "auto") {
     margin_right = underflow;
   }
+
+  if(margin_right != "auto" && margin_left == "auto" && width != "auto") {
+    margin_left = underflow;
+  }
+
   if(width == "auto") {
     if(margin_right == "auto") margin_right = 0;
     if(margin_left == "auto") margin_left = 0;
-  }
 
-  if(underflow >= 0) {
-    width = underflow;
-  } else {
-    width = 0;
-    margin_right = margin_right + underflow;
+    if(underflow >= 0) {
+      width = underflow;
+    } else {
+      width = 0;
+      margin_right = margin_right + underflow;
+    }
   }
 
   if(width != "auto" && (margin_left == "auto" && margin_right == "auto")) {
@@ -100,13 +108,14 @@ var toPx = function(str, container_size) {
   str = (str || '');
   var result;
   var BASE_PX_SIZE = 16;
+  if(typeof str == "number") return str;
   if(str.match(/px$/i)) result = parseInt(str);
   if(str.match(/em$/i)) result = (parseInt(str) * BASE_PX_SIZE);
   if(str.match(/%$/)) result = (parseInt(str) * container_size) / 100;
-  if(str.match(/thin/)) result = ua.thin;
-  if(str.match(/medium/)) result = ua.medium;
-  if(str.match(/thick/)) result = ua.thick;
-  if(str.match(/normal/)) result = ua.normal;
+  if(str.match(/thin/)) result = toPx(ua.thin, container_size);
+  if(str.match(/medium/)) result = toPx(ua.medium, container_size);
+  if(str.match(/thick/)) result = toPx(ua.thick, container_size);
+  if(str.match(/normal/)) result = toPx(ua.normal, container_size);
   return result || 0;
 }
 
@@ -127,55 +136,98 @@ var calcPosition = function(parent, box) {
 
   d.padding.top = pxHeight(style['padding-top']);
   d.padding.bottom = pxHeight(style['padding-bottom']);
-
   d.content.x = pd.content.x + d.margin.left + d.border.left + d.padding.left;
-
   // Position the box below all the previous boxes in the container.
   d.content.y = (pd.content.height||0) + pd.content.y + d.margin.top + d.border.top + d.padding.top;
+  console.log("1)", u.nodeToString(box.node), d.content, "PARENT", u.nodeToString(parent.node), pd.content);
+}
+
+var calcCoords = function(parent, box) {
+  var pd = parent.dimensions;
+  var d = box.dimensions;
+  console.log("CC CHILDREN", u.nodeToString(box.node), box.children.map(function(b){ return u.nodeToString(b.node) +' ' + JSON.stringify(b.dimensions.content) }));
+  console.log("=============pd.content.height", pd.content.height);
+  // //d.content.x = pd.content.x + d.margin.left + d.border.left + d.padding.left;
+  // // Position the box below all the previous boxes in the container.
+  // console.log("1111)", u.nodeToString(box.node), d.content, "PARENT", u.nodeToString(parent.node), pd.content);
+  // if(box.type === "block" && pd.content && d.content) pd.content.y = (d.content.height||0) + d.content.y + d.margin.top + d.border.top + d.padding.top;
+  // console.log("2)", u.nodeToString(box.node), d.content, "PARENT", u.nodeToString(parent.node), pd.content);
 }
 
 var calcHeight = function(parent, box) {
   var style = getBoxStyle(box);
-  if(style.height) box.dimensions.content.height = toPx(style.height, parent.dimensions.content.height);
+  var height = toPx(style.height, parent.dimensions.content.height);
+
+  // here we force the height. This will tell us if it overflows
+  if(height) {
+    box.dimensions.content.height = height;
+    console.log("SET HEIGHT TO ", u.nodeToString(box.node), height);
+  }
+}
+
+var calcIHeight = function(parent, box) {
+  var style = box.node.style
+  var topx = toPx(style['line-height'], parent.dimensions.content.height);
+  var fontsize = Math.ceil(topx * toPx(style['font-size'], parent.dimensions.content.height));
+  box.dimensions.content.height = fontsize
+  console.log("SET IHEIGHT TO ", u.nodeToString(box.node), fontsize);
 }
 
 var layoutChildren = function(box) {
   var d = box.dimensions;
-  box.children.map(function(child){
-    addDimensions(box, child);
-    d.content.height = d.content.height + marginBox(child.dimensions).height;
-  });
-}
+  console.log("Layout kids", u.nodeToString(box.node));
+  box.children.forEach(function(child){ addDimensions(box, child); }); // this recurses
 
-var calcIHeight = function(parent, box) {
-  //console.log('box.node.style', box.node.style);
-  box.dimensions.content.height = toPx(box.node.style['line-height']);
+  if(box.type === "block" && u.hasAllInlineKids(box)) {
+    var b = Box(box.node, 'line');
+    var kids = box.children;
+    b.children = kids;
+    var kids_heights = kids.map(function(c){ return c.dimensions.content.height })
+    if(kids_heights.length) b.dimensions.content.height = _.max(kids_heights);
+    console.log("LC SET HEGHT", u.nodeToString(box.node), b.dimensions.content.height);
+    box.children = [b]; // place all of them in a linebox. Should it be 1 line box per kid?
+  }
+
+  if(box.type !== 'line') {
+    box.dimensions.content.height = box.children.reduce(function(h, c){
+      return h + marginBox(c.dimensions).height;
+    }, d.content.height);
+    console.log("LC SET iHEGHT", u.nodeToString(box.node), box.dimensions.content.height);
+  }
 }
 
 var addDimensions = function(parent, box) {
+  console.log("------ADD DIMS", u.nodeToString(box.node))
   switch(box.type) {
     case 'block' :
+      console.log("------BLOCK", u.nodeToString(box.node))
       calcWidth(parent, box);
       calcPosition(parent, box);
       layoutChildren(box);
+      console.log('----DONE KIDS---', u.nodeToString(box.node))
       calcHeight(parent, box);
+      calcCoords(parent, box);
       break;
     case 'inline' :
+      console.log("------INLINE", u.nodeToString(box.node))
       calcWidth(parent, box);
       calcPosition(parent, box);
       layoutChildren(box);
       calcIHeight(parent, box);
+      calcCoords(parent, box);
       break;
     default :
+      console.log("------DEFAULT", u.nodeToString(box.node))
       calcWidth(parent, box);
       calcPosition(parent, box);
+      //no height here because it's probably title/meta stuff
       if(box.children) box.children = box.children.map(function(x){ return addDimensions(box, x) });
+      calcCoords(parent, box);
   }
- //console.log('box', nodeToString(box.node), box.dimensions);
   return box;
 }
 
 module.exports = function(viewport, layout_boxes) {
-    return layout_boxes.map(function(b) { return addDimensions(viewport, b); })
+  return layout_boxes.map(function(b) { return addDimensions(viewport, b); })
 }
 

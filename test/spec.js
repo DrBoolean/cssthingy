@@ -25,7 +25,7 @@ describe("Parsing", function(){
   it('gets userAgent styles', function(){
     assert.equal(body.style['display'], 'block');
     assert.equal(h1.style['font-weight'], 'bold');
-    assert.equal(h1.style['font-size'], '0.67em');
+    assert.equal(h1.style['margin-block-start'], '.67em');
   });
 
   it('gives style to simple classes', function(){
@@ -87,7 +87,7 @@ describe("Parsing", function(){
 
     describe("Calculating Dimensions", function(){
       var dimensioned, firstDivBox, secondDivBox;
-      beforeEach(function() {
+      before(function() {
         dimensioned = M.calculateDimensions(M.viewport({width: 1440}), layout);
         var bodyBox = _.last(dimensioned[0].children[1].children);
         firstDivBox = bodyBox.children[0];
@@ -95,11 +95,11 @@ describe("Parsing", function(){
       });
 
       it("calculates block width", function(){
-        console.log(M.print(dimensioned));
         assert.equal(secondDivBox.dimensions.content.width, 1424);
       });
 
       it("calculates height", function(){
+        console.log(M.print(dimensioned));
         var paragraph = secondDivBox.children[0];
         assert.equal(paragraph.dimensions.content.height, 37);
       });

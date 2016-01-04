@@ -13,7 +13,6 @@ var Specificity = function(name) {
 }
 
 var sumSpecificity = function(s) {
-  console.log('S', s);
   return parseInt(s.specificity.join(''));
 }
 
@@ -62,8 +61,13 @@ var getInheritedStyles = function(node) {
   return Style(Specificity('inherited'), style);
 }
 
+var root = Object.keys(spec).reduce(function(acc, k) {
+  if(spec[k].inherit && spec[k].initial) { acc[k] = spec[k].initial; }
+  return acc;
+}, {});
+
 var initial = Object.keys(spec).reduce(function(acc, k) {
-  if(spec[k].initial) { acc[k] = spec[k].initial; }
+  if(!spec[k].inherit && spec[k].initial) { acc[k] = spec[k].initial; }
   return acc;
 }, {});
 
@@ -74,7 +78,6 @@ var getInitialStyle = function(node) {
 
 var getUserAgentStyle = function(node) {
   var obj = m_rules[getTag(node)];
-  console.log('OBJ', obj);
   if(obj) return Style(Specificity('tag'), obj);
 }
 
@@ -187,6 +190,6 @@ module.exports = function(mrules, rules, dom) {
     return acc;
   }, {});
 
-    return dom.filter(function(n){ return n.type !== "directive"}).map(function(c){ return attachAllStyles({}, c, rules)});
+    return dom.filter(function(n){ return n.type !== "directive"}).map(function(c){ return attachAllStyles({style: root}, c, rules)});
 
 }

@@ -1,7 +1,7 @@
 module.exports = {
-  'thin': 1,
-  'medium': 3,
-  'thick': 5,
-  'normal': 32,
+  'thin': '1px',
+  'medium': '0px',
+  'thick': '5px',
+  'normal': 1.2,
   'color': 'blue'
 }

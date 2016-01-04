@@ -1,0 +1,20 @@
+.one {
+  background-color: red;
+  width: 300px;
+}
+
+.two {
+  background-color: green;
+  height: 100px;
+}
+
+.three {
+  background-color: yellow;
+  height: 500px;
+}
+
+.four {
+  background-color: blue;
+  color: white;
+  font-size: 14px;
+}

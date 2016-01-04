@@ -1,6 +1,6 @@
 var _ = require('lodash');
 var types = require('./types');
-var nodeToString = require('./util').nodeToString;
+var u = require('./util');
 var Box = types.Box;
 var Rect = types.Rect;
 var EdgeSizes = types.EdgeSizes;
@@ -18,10 +18,6 @@ var pushAnon = function(parent, box) {
   }
 }
 
-var hasAllInlineKids = function(box) {
-  return _.all(box.children, function(k) { return k.node.style.display.match(/inline/i) });
-}
-
 var makeBox = function(parent, node) {
   var box;
   switch(node.style.display) {
@@ -31,7 +27,7 @@ var makeBox = function(parent, node) {
       break;
     case 'inline':
       box = Box(node, 'inline');
-      hasAllInlineKids(parent) ? parent.children.push(box) : pushAnon(parent, box);
+      u.hasAllInlineKids(parent) ? parent.children.push(box) : pushAnon(parent, box);
       break;
     case 'inline-block':
       box = Box(node, 'inline-block');
@@ -56,19 +52,19 @@ var printBox = function(acc, box) {
 
   switch(box.type) {
     case 'block' :
-      str += '\n'+indent+'block.'+nodeToString(box.node) + dimensionsToString(box.dimensions);
+      str += '\n'+indent+'block.'+u.nodeToString(box.node) + dimensionsToString(box.dimensions);
       break;
     case 'anonymous':
       str += '\n'+indent+'anon'+ dimensionsToString(box.dimensions);
       break;
     case 'inline':
-      str += '\n'+indent+'inline.'+nodeToString(box.node) + dimensionsToString(box.dimensions);
+      str += '\n'+indent+'inline.'+u.nodeToString(box.node) + dimensionsToString(box.dimensions);
       break;
     case 'inline-block':
-      str += '\n'+indent+'inline-block.'+nodeToString(box.node) + dimensionsToString(box.dimensions);
+      str += '\n'+indent+'inline-block.'+u.nodeToString(box.node) + dimensionsToString(box.dimensions);
       break;
     default:
-      str += '\n'+indent+box.type+'.'+nodeToString(box.node) + dimensionsToString(box.dimensions);
+      str += '\n'+indent+box.type+'.'+u.nodeToString(box.node) + dimensionsToString(box.dimensions);
   }
 
   if(box.children.length) {

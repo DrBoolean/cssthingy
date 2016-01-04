@@ -8,10 +8,10 @@ var parsing = require('./parsing');
 
 module.exports = {
   stylize: function(htmlpath, csspath, cb) {
-    var h = fs.readFileSync(htmlpath, 'utf-8');
-    var c = fs.readFileSync(csspath, 'utf-8');
-    var m = fs.readFileSync(__dirname+'/mozilla.css', 'utf-8');
-    parsing(h, c, m, _.compose(cb, styles))
+    var raw_html = fs.readFileSync(htmlpath, 'utf-8');
+    var raw_css = fs.readFileSync(csspath, 'utf-8');
+    var raw_mozilla = fs.readFileSync(__dirname+'/mozilla.css', 'utf-8');
+    parsing(raw_html, raw_css, raw_mozilla, _.compose(cb, styles))
   },
   createLayout: boxes.createLayout,
   print: boxes.print,
